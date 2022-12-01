@@ -5,13 +5,13 @@
          version="2.4">
    
     <servlet>
-        <display-name>Controller Servlet</display-name>
-        <servlet-name>controller</servlet-name>
-        <servlet-class>com.controlj.addon.sanity.Controller</servlet-class>
+        <display-name>TrendServlet</display-name>
+        <servlet-name>trend</servlet-name>
+        <servlet-class>com.ccgautomation.servlets.TrendServlet</servlet-class>
     </servlet>
     <servlet-mapping>
-        <servlet-name>controller</servlet-name>
-        <url-pattern>/controller</url-pattern>
+        <servlet-name>trend</servlet-name>
+        <url-pattern>/trend</url-pattern>
     </servlet-mapping>
 
 
@@ -36,6 +36,6 @@
     </login-config>
 
     <welcome-file-list>
-        <welcome-file>index.html</welcome-file>
+        <welcome-file>trend</welcome-file>
     </welcome-file-list>
 </web-app>
