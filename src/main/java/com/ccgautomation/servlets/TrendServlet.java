@@ -1,10 +1,9 @@
 package com.ccgautomation.servlets;
 
-import com.ccgautomation.trends.AnalogTrendProcessor;
-import com.controlj.green.addonsupport.InvalidConnectionRequestException;
+import com.ccgautomation.trends.MyAnalogTrendProcessor;
+import com.ccgautomation.trends.MyAnalogTrendSample;
 import com.controlj.green.addonsupport.access.*;
 import com.controlj.green.addonsupport.access.aspect.AnalogTrendSource;
-import com.controlj.green.addonsupport.access.aspect.DigitalTrendSource;
 import com.controlj.green.addonsupport.access.aspect.TrendSource;
 import com.controlj.green.addonsupport.access.trend.*;
 import org.jetbrains.annotations.NotNull;
@@ -18,6 +17,7 @@ import java.io.Writer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 
 // http://alcshare.com/content/add-on-tutorial/trends.html
 // https://github.com/alclabs/ZoneHistory/blob/master/src/main/java/com/controlj/addon/zonehistory/reports/EnvironmentalIndexProcessor.java
@@ -63,6 +63,7 @@ public class TrendServlet extends HttpServlet {
                     for (int i = 0; i < ids.length; i++) {
                         String id = ids[i].trim();
                         TrendData<? extends TrendSample> data = null;
+                        TrendData<TrendAnalogSample> analogData = null;
 
                         try {
                             Location loc = geo.resolve(id);
@@ -70,33 +71,43 @@ public class TrendServlet extends HttpServlet {
                             TrendSource.Type type = ts.getType();
 
                             if (type==TrendSource.Type.Analog) {
-                                data = (((AnalogTrendSource) ts).getTrendData(range));
+                                // This just gets trends without the processor
+                                analogData = (((AnalogTrendSource) ts).getTrendData(range));
                             }
-                            else if (type==TrendSource.Type.Digital) {
-                                data = (((DigitalTrendSource) ts).getTrendData(range));
-                            }
+                            //else if (type==TrendSource.Type.Digital) {
+                            //    data = (((DigitalTrendSource) ts).getTrendData(range));
+                            //}
 
                             // Method A - will include holes
-                            Iterator<? extends TrendSample> it = data.getSamples();
+                            /*
+                                // Which was to do nothing...I guess
+                            */
+
+                            // Method B - can process holes and preprocess data
+                            List<MyAnalogTrendSample> analogTrendSamples = null;
+                            if (analogData != null) {
+                                // I'm not sure what effect the Processor has on the original list
+                                //
+                                MyAnalogTrendProcessor mtp = new MyAnalogTrendProcessor();
+                                analogData.process(mtp);
+                                analogTrendSamples = mtp.getSamples();
+                            }
+
+                            for (MyAnalogTrendSample sample : analogTrendSamples) {
+                                sb.append(sample.toString());
+                                sb.append("\r\n");
+                            }
+                            /* This still uses Method A where no processor was used??
+                            Iterator<? extends TrendSample> it = analogData.getSamples();
                             while(it.hasNext()) {
                                 TrendSample sample = it.next();
                                 sb.append(id);
                                 if (sample.getType() == TrendType.DATA) {
                                     sb.append(",");
-                                    sb.append(dateFormatter.format(sample.getTime()));
-                                    sb.append(",");
-                                    if (sample instanceof TrendAnalogSample) {
-                                        sb.append((TrendAnalogSample)sample);
-                                    }
-                                    if (sample instanceof TrendDigitalSample) {
-                                        sb.append((TrendDigitalSample)sample);
-                                    }
-                                    sb.append("\r\n");
+                                    sb.append(it);
                                 }
                             }
-
-                            // Method B - can process holes and preprocess data
-                            // data.process(new AnalogTrendProcessor());
+                            */
                         }
                         catch (Exception ex) {
                             System.out.println(ex.getMessage());

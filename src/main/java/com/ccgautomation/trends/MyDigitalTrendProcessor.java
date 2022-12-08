@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
 
-public class DigitalTrendProcessor implements TrendProcessor<TrendDigitalSample> {
+public class MyDigitalTrendProcessor implements TrendProcessor<TrendDigitalSample> {
     @Override
     public void processStart(@NotNull Date date, @Nullable TrendDigitalSample trendDigitalSample) {
 
