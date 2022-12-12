@@ -9,11 +9,15 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-public class MyAnalogTrendProcessor implements TrendProcessor<TrendAnalogSample> {
+/*
+    Processes a meter trend into a list of per-day totals
+ */
+
+public class EnergyMeterTrendProcessor implements TrendProcessor<TrendAnalogSample> {
 
     private int periodicity;
     // Priodicity inference method
-    public MyAnalogTrendProcessor() {
+    public EnergyMeterTrendProcessor() {
         this.periodicity = determinePeriodicity();
     }
     List<MyAnalogTrendSample> data = new ArrayList<>();

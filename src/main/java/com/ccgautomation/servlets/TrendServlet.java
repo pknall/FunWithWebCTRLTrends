@@ -2,8 +2,12 @@ package com.ccgautomation.servlets;
 
 import com.ccgautomation.trends.MyAnalogTrendProcessor;
 import com.ccgautomation.trends.MyAnalogTrendSample;
+import com.ccgautomation.trends.MyDigitalTrendProcessor;
+import com.ccgautomation.trends.MyEquipmentColorTrendProcessor;
 import com.controlj.green.addonsupport.access.*;
 import com.controlj.green.addonsupport.access.aspect.AnalogTrendSource;
+import com.controlj.green.addonsupport.access.aspect.DigitalTrendSource;
+import com.controlj.green.addonsupport.access.aspect.EquipmentColorTrendSource;
 import com.controlj.green.addonsupport.access.aspect.TrendSource;
 import com.controlj.green.addonsupport.access.trend.*;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +44,9 @@ public class TrendServlet extends HttpServlet {
             response.setContentType("text/plain");
             Writer writer = response.getWriter();
             //disableCache(response);
-            writer.write(doWork(ids));
+
+            TrendRange range = TrendRangeFactory.byDateRange(startDate, endDate);
+            writer.write(doWork(ids, new MyAnalogTrendProcessor(), range));
         }
         catch (Exception e)
         {
@@ -50,68 +56,33 @@ public class TrendServlet extends HttpServlet {
         }
     }
 
-    private String doWork(final String[] ids) {
+    private String doWork(final String[] ids, final MyAnalogTrendProcessor myAnalogTrendProcessor, final TrendRange range) {
         final StringBuilder sb = new StringBuilder();
-        SystemConnection connection;
-        connection = DirectAccess.getDirectAccess().getRootSystemConnection();
+        SystemConnection connection = DirectAccess.getDirectAccess().getRootSystemConnection();
         try {
-            connection.runReadAction(FieldAccessFactory.newFieldAccess(), new ReadAction() {
-                public void execute(@NotNull SystemAccess access) {
-                    Tree geo = access.getTree(SystemTree.Geographic);
-                    TrendRange range = TrendRangeFactory.byDateRange(startDate, endDate);
+            // Converted to lambda:
+            // connection.runReadAction(FieldAccessFactory.newFieldAccess(), new ReadAction() {
+            //    public void execute(@NotNull SystemAccess access) {
+            connection.runReadAction(FieldAccessFactory.newFieldAccess(), access -> {
+                Tree geo = access.getTree(SystemTree.Geographic);
+                List<? extends TrendSample> trendSamples = null;
 
-                    for (int i = 0; i < ids.length; i++) {
-                        String id = ids[i].trim();
-                        TrendData<? extends TrendSample> data = null;
-                        TrendData<TrendAnalogSample> analogData = null;
+                for (int i = 0; i < ids.length; i++) {
+                    String id = ids[i].trim();
 
-                        try {
-                            Location loc = geo.resolve(id);
-                            TrendSource ts = loc.getAspect(TrendSource.class);
-                            TrendSource.Type type = ts.getType();
+                    try {
+                        Location loc = geo.resolve(id);
+                        TrendSource ts = loc.getAspect(TrendSource.class);
+                        TrendSource.Type type = ts.getType();
 
-                            if (type==TrendSource.Type.Analog) {
-                                // This just gets trends without the processor
-                                analogData = (((AnalogTrendSource) ts).getTrendData(range));
-                            }
-                            //else if (type==TrendSource.Type.Digital) {
-                            //    data = (((DigitalTrendSource) ts).getTrendData(range));
-                            //}
-
-                            // Method A - will include holes
-                            /*
-                                // Which was to do nothing...I guess
-                            */
-
-                            // Method B - can process holes and preprocess data
-                            List<MyAnalogTrendSample> analogTrendSamples = null;
-                            if (analogData != null) {
-                                // I'm not sure what effect the Processor has on the original list
-                                //
-                                MyAnalogTrendProcessor mtp = new MyAnalogTrendProcessor();
-                                analogData.process(mtp);
-                                analogTrendSamples = mtp.getSamples();
-                            }
-
-                            for (MyAnalogTrendSample sample : analogTrendSamples) {
-                                sb.append(sample.toString());
-                                sb.append("\r\n");
-                            }
-                            /* This still uses Method A where no processor was used??
-                            Iterator<? extends TrendSample> it = analogData.getSamples();
-                            while(it.hasNext()) {
-                                TrendSample sample = it.next();
-                                sb.append(id);
-                                if (sample.getType() == TrendType.DATA) {
-                                    sb.append(",");
-                                    sb.append(it);
-                                }
-                            }
-                            */
+                        if (type==TrendSource.Type.Analog) {
+                            TrendData<TrendAnalogSample> analogData = (((AnalogTrendSource) ts).getTrendData(range));
+                            trendSamples = analogData.process(myAnalogTrendProcessor).getSamples();
                         }
-                        catch (Exception ex) {
-                            System.out.println(ex.getMessage());
-                        }
+                        trendSamples.stream().forEach(s -> sb.append(id + "," + s.toString() + "\r\n"));
+                    }
+                    catch (Exception ex) {
+                        System.out.println(ex.getMessage());
                     }
                 }
             });
