@@ -1,10 +1,13 @@
 package com.ccgautomation.servlets;
 
 import com.ccgautomation.trends.MyAnalogTrendProcessor;
+import com.ccgautomation.trends.MyAnalogTrendSample;
 import com.controlj.green.addonsupport.access.*;
 import com.controlj.green.addonsupport.access.aspect.AnalogTrendSource;
 import com.controlj.green.addonsupport.access.aspect.TrendSource;
 import com.controlj.green.addonsupport.access.trend.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -13,8 +16,9 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.Writer;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
+
+// https://grafana.com/tutorials/build-a-data-source-plugin/
 
 // https://happycoding.io/tutorials/java-server/rest-api - Rest Servlet
 // https://stackoverflow.com/questions/31657641/tomcat-restful-web-service-deployment - REST Tomcat Servlet
@@ -40,63 +44,78 @@ public class TrendServlet extends HttpServlet {
         {
             String requestUrl = request.getRequestURI();
             String[] fields = requestUrl.split("/");
-            response.setContentType("text/plain");
+            response.setContentType("application/json");
+            Gson gson = new GsonBuilder()
+                    .setPrettyPrinting()
+                    .create();
             Writer writer = response.getWriter();
             //disableCache(response);
-
             TrendRange range = TrendRangeFactory.byDateRange(startDate, endDate);
-            writer.write(doWork(ids, new MyAnalogTrendProcessor(), range));
-            writer.write(requestUrl);
-            for (String s : fields) {
-                writer.write(">");
-                writer.write(s);
-                writer.write("\r\n");
-            }
+            List<MyAnalogTrendSample> results = doWork(Arrays.asList(ids), new MyAnalogTrendProcessor(), range);
+            writer.write(gson.toJson(results));
         }
         catch (Exception e)
         {
+            response.setContentType("text/plain");
             if (!response.isCommitted()) {
                 response.sendError(BAD_RESPONSE, e.getMessage());
             }
         }
     }
 
-    private String doWork(final String[] ids, final MyAnalogTrendProcessor myAnalogTrendProcessor, final TrendRange range) {
-        final StringBuilder sb = new StringBuilder();
+    private List<MyAnalogTrendSample> doWork(final List<String> ids,
+                                             final MyAnalogTrendProcessor myAnalogTrendProcessor,
+                                             final TrendRange range) throws SystemException, ActionExecutionException {
+        final List<MyAnalogTrendSample> results = new ArrayList<>();
         SystemConnection connection = DirectAccess.getDirectAccess().getRootSystemConnection();
-        try {
-            // Converted to lambda:
-            // connection.runReadAction(FieldAccessFactory.newFieldAccess(), new ReadAction() {
-            //    public void execute(@NotNull SystemAccess access) {
-            connection.runReadAction(FieldAccessFactory.newFieldAccess(), access -> {
-                Tree geo = access.getTree(SystemTree.Geographic);
-                List<? extends TrendSample> trendSamples = null;
 
-                for (int i = 0; i < ids.length; i++) {
-                    String id = ids[i].trim();
-
-                    try {
-                        Location loc = geo.resolve(id);
-                        TrendSource ts = loc.getAspect(TrendSource.class);
-                        TrendSource.Type type = ts.getType();
-
-                        if (type==TrendSource.Type.Analog) {
-                            TrendData<TrendAnalogSample> analogData = (((AnalogTrendSource) ts).getTrendData(range));
-                            trendSamples = analogData.process(myAnalogTrendProcessor).getSamples();
-                        }
-                        trendSamples.stream().forEach(s -> sb.append(id + "," + s.toString() + "\r\n"));
+        // Converted to lambda:
+        // connection.runReadAction(FieldAccessFactory.newFieldAccess(), new ReadAction() {
+        //    public void execute(@NotNull SystemAccess access) {
+        connection.runReadAction(FieldAccessFactory.newFieldAccess(), access -> {
+            Tree geo = access.getTree(SystemTree.Geographic);
+            ids.stream().forEach(id -> {
+                try {
+                    Location location = getTreeLocationByReferenceName(geo, id);
+                    TrendSource trendSource = getTrendSourceAtLocation(location);
+                    TrendSource.Type type = trendSource.getType();
+                    if (type == TrendSource.Type.Analog) {
+                        TrendData<TrendAnalogSample> analogData = (((AnalogTrendSource) trendSource).getTrendData(range));
+                        results.addAll(getTrendSources(analogData, myAnalogTrendProcessor));
                     }
-                    catch (Exception ex) {
-                        System.out.println(ex.getMessage());
-                    }
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
                 }
             });
-        }
-        catch (Exception ex) {
-            System.out.println(ex.getMessage());
-        }
-
-        return sb.toString();
+        });
+        return results;
     }
 
+    private List<MyAnalogTrendSample> getTrendSources(TrendData<TrendAnalogSample> analogData,
+                                                      MyAnalogTrendProcessor myAnalogTrendProcessor){
+        try {
+            return analogData.process(myAnalogTrendProcessor).getSamples();
+        } catch (TrendException e) {
+            // Log Error
+            throw new RuntimeException("Unable to process Trend Data: " + e);
+        }
+    }
+
+    private TrendSource getTrendSourceAtLocation(Location location) {
+        try {
+            return location.getAspect(TrendSource.class);
+        } catch (NoSuchAspectException e) {
+            // Log Error
+            throw new RuntimeException("Unable to retrieve trend source at " + location + " + : " + e);
+        }
+    }
+
+    private Location getTreeLocationByReferenceName(Tree tree, String id) {
+        try {
+            return tree.resolve(id.trim());
+        } catch (UnresolvableException e) {
+            // Log Error
+            throw new RuntimeException("Unable to find tree location at " + id + " : " + e);
+        }
+    }
 }

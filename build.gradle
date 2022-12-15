@@ -23,7 +23,11 @@ dependencies {
 
    testCompile 'junit:junit:3.8.1'
 
-   providedCompile 'com.controlj.green:directaccess-api-addon:1.4.0'
+    // https://mvnrepository.com/artifact/com.google.code.gson/gson
+    compile 'com.google.code.gson:gson:2.10'
+
+
+    providedCompile 'com.controlj.green:directaccess-api-addon:1.4.0'
     providedCompile 'com.controlj.green:webaccess-api-addon:1.4.0'
     providedCompile 'com.controlj.green:addonsupport-api-addon:1.4.0'
    providedCompile 'javax.servlet:servlet-api:2.5'
