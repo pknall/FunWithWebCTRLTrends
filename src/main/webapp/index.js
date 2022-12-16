@@ -5,7 +5,7 @@ var app = express();
 
 app.use(bodyParser.json());
 
-var timeseries = require('./series');
+var timeseries = require('../resources/series.json');
 var countryTimeseries = require('./country-series');
 
 var now = Date.now();
