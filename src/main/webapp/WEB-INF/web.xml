@@ -14,46 +14,6 @@
         <url-pattern>/trend/*</url-pattern>
     </servlet-mapping>
 
-    <servlet>
-        <display-name>SimpleJsonDS_Annotations</display-name>
-        <servlet-name>sjds_annotaitons</servlet-name>
-        <servlet-class>com.ccgautomation.servlets.sjds.AnnotionsServlet</servlet-class>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>sjds_annotaitons</servlet-name>
-        <url-pattern>/sjds/annotations</url-pattern>
-    </servlet-mapping>
-
-    <servlet>
-        <display-name>SimpleJsonDS_Search</display-name>
-        <servlet-name>sjds_search</servlet-name>
-        <servlet-class>com.ccgautomation.servlets.sjds.SearchServlet</servlet-class>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>sjds_search</servlet-name>
-        <url-pattern>/sjds/search</url-pattern>
-    </servlet-mapping>
-
-    <servlet>
-        <display-name>SimpleJsonDS_Query</display-name>
-        <servlet-name>sjds_query</servlet-name>
-        <servlet-class>com.ccgautomation.servlets.sjds.QueryServlet</servlet-class>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>sjds_query</servlet-name>
-        <url-pattern>/sjds/query</url-pattern>
-    </servlet-mapping>
-
-    <servlet>
-        <display-name>SimpleJsonDS_TestConnection</display-name>
-        <servlet-name>sjds_testconnection</servlet-name>
-        <servlet-class>com.ccgautomation.servlets.sjds.ConnectionTestServlet</servlet-class>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>sjds_testconnection</servlet-name>
-        <url-pattern>/sjds/</url-pattern>
-    </servlet-mapping>
-
     <security-constraint>
        <web-resource-collection>
           <web-resource-name>WEB</web-resource-name>

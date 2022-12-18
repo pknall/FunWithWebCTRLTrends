@@ -9,9 +9,9 @@ apply from: configurations.gradleScript.resolve().iterator().next()
 
 info {
   name = 'Trend Exporter'
-  description = 'Kicks ass, takes names'
+  description = 'Exports Trends through a REST Interface'
   version = '1.0'
-  vendor = 'Deadpool'
+  vendor = 'CCG Automation, Inc.'
 }
 
 sourceCompatibility = 1.8
