@@ -3,15 +3,25 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd"
          version="2.4">
-   
+
     <servlet>
         <display-name>TrendServlet</display-name>
-        <servlet-name>trend</servlet-name>
+        <servlet-name>trendservlet</servlet-name>
         <servlet-class>com.ccgautomation.servlets.TrendServlet</servlet-class>
     </servlet>
     <servlet-mapping>
-        <servlet-name>trend</servlet-name>
-        <url-pattern>/trend/*</url-pattern>
+        <servlet-name>trendservlet</servlet-name>
+        <url-pattern>/trendservlet</url-pattern>
+    </servlet-mapping>
+   
+    <servlet>
+        <display-name>TrendService</display-name>
+        <servlet-name>trendservice</servlet-name>
+        <servlet-class>com.ccgautomation.servlets.TrendService</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>trendservice</servlet-name>
+        <url-pattern>/trendservice/*</url-pattern>
     </servlet-mapping>
 
     <security-constraint>
