@@ -27,6 +27,7 @@ import java.util.*;
 // https://github.com/alclabs/ZoneHistory/blob/master/src/main/java/com/controlj/addon/zonehistory/reports/EnvironmentalIndexReport.java
 // https://www.javaexercise.com/java/list-of-timezone-id-of-all-countries-in-java
 // ABSPATH:1:#wp_ccg_fpvav-1-11/max_heating_cfm_trend
+// https://stackoverflow.com/questions/3413036/http-response-caching
 
 public class TrendService extends HttpServlet {
 
@@ -48,13 +49,11 @@ public class TrendService extends HttpServlet {
 
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response) {
-        response.setContentType("application/json");
         String requestUrl = request.getRequestURI();
         Date startDate = getDateFromRequestUrlWithIndex(requestUrl, startDateIndex);
         Date endDate = getDateFromRequestUrlWithIndex(requestUrl, endDateIndex);
         String[] ids = getIdsFromRequestUrlWithIndex(requestUrl, trendIdListIndex);
         List<MyAnalogTrendSample> results = getTrendResults(ids, startDate, endDate);
-        //disableCache(response);
         writeResultsToResponse(results, response);
     }
 
@@ -73,6 +72,10 @@ public class TrendService extends HttpServlet {
     }
 
     private void writeResultsToResponse(List<MyAnalogTrendSample> results, HttpServletResponse response) {
+        response.setContentType("application/json");
+        response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1.
+        //response.setHeader("Pragma", "no-cache"); // HTTP 1.0.
+        //response.setDateHeader("Expires", 0); // Proxies.
         Writer writer = null;
         try {
             writer = response.getWriter();
