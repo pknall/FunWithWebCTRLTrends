@@ -4,10 +4,11 @@ import com.ccgautomation.trends.MyAnalogTrendProcessor;
 import com.ccgautomation.trends.MyAnalogTrendSample;
 import com.ccgautomation.utilities.DateTools;
 import com.ccgautomation.utilities.TrendTools;
+import com.controlj.green.addonsupport.access.ActionExecutionException;
+import com.controlj.green.addonsupport.access.SystemException;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -41,46 +42,77 @@ public class TrendService extends HttpServlet {
     private SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd");
 
     @Override
-    public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    public void doGet(HttpServletRequest request, HttpServletResponse response)  {
         doPost(request, response);
     }
 
     @Override
-    public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        try
-        {
-            DateTools dateTools = new DateTools(TimeZone.getTimeZone(defaultTimeZone));
-            String requestUrl = request.getRequestURI();
+    public void doPost(HttpServletRequest request, HttpServletResponse response) {
+        response.setContentType("application/json");
+        String requestUrl = request.getRequestURI();
+        Date startDate = getDateFromRequestUrlWithIndex(requestUrl, startDateIndex);
+        Date endDate = getDateFromRequestUrlWithIndex(requestUrl, endDateIndex);
+        String[] ids = getIdsFromRequestUrlWithIndex(requestUrl, trendIdListIndex);
+        List<MyAnalogTrendSample> results = getTrendResults(ids, startDate, endDate);
+        //disableCache(response);
+        writeResultsToResponse(results, response);
+    }
 
-            String[] fields = requestUrl.split("/");
-            Date startDate = convertStringToDate(dateTools, fields, startDateIndex);
-            Date endDate = convertStringToDate(dateTools, fields, endDateIndex);
-            String[] ids = fields[trendIdListIndex].split(",");
-
-            response.setContentType("application/json");
-            Gson gson = new GsonBuilder()
-                    .setPrettyPrinting()
-                    .create();
-            Writer writer = response.getWriter();
-            //disableCache(response);
-            List<MyAnalogTrendSample> results = new TrendTools().doWork(Arrays.asList(ids), new MyAnalogTrendProcessor(), startDate, endDate);
-            writer.write(gson.toJson(results));
+    private List<MyAnalogTrendSample> getTrendResults(String[] ids, Date startDate, Date endDate) {
+        List<MyAnalogTrendSample> results = null;
+        try {
+            results = new TrendTools().doWork(Arrays.asList(ids), new MyAnalogTrendProcessor(), startDate, endDate);
+        } catch (SystemException e) {
+            //TODO Log Exception
+            // throw new RuntimeException(e);
+        } catch (ActionExecutionException e) {
+            //TODO Log Exception
+            // throw new RuntimeException(e);
         }
-        catch (Exception e)
-        {
-            response.setContentType("text/plain");
-            if (!response.isCommitted()) {
-                response.sendError(BAD_RESPONSE, e.getMessage());
+        return results;
+    }
+
+    private void writeResultsToResponse(List<MyAnalogTrendSample> results, HttpServletResponse response) {
+        Writer writer = null;
+        try {
+            writer = response.getWriter();
+        } catch (IOException e) {
+            //TODO Log Exception
+            //throw new RuntimeException(e);
+        }
+
+        Gson gson = new GsonBuilder()
+                .setPrettyPrinting()
+                .create();
+
+        if (writer != null) {
+            try {
+                writer.write(gson.toJson(results));
+            } catch (IOException e) {
+                //TODO Log Exception
+                //throw new RuntimeException(e);
             }
         }
     }
 
-    private Date convertStringToDate(DateTools dateTools, String[] fields) {
+    private Date getDateFromRequestUrlWithIndex(String requestUrl, int index) {
+        String[] fields = requestUrl.split("/");
+        DateTools dateTools = new DateTools(TimeZone.getTimeZone(defaultTimeZone));
         try {
-            return dateTools.convertStringToDate(dateString);
+            return dateTools.convertStringToDate(fields[index]);
         }
         catch(ParseException ex) {
             //TODO Log Exception
+            return null;
+        }
+    }
+
+    private String[] getIdsFromRequestUrlWithIndex(String requestUrl, int index) {
+        String[] fields = requestUrl.split("/");
+        try {
+            return fields[index].split(",");
+        }
+        catch (Exception ex) {
             return null;
         }
     }
