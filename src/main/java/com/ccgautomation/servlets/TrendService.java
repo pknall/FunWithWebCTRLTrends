@@ -35,12 +35,7 @@ public class TrendService extends HttpServlet {
     private static final int endDateIndex = 2;
     private static final int trendIdListIndex = 3;
     private static final String defaultTimeZone = "EST";
-    private static final String ABSPATH  = "ABSPATH:1:#";
-    private static String[] ids = {"ABSPATH:1:#wp_ccg_fpvav-1-11/max_heating_cfm_trend"};
-    private static final Date startDate = new Date(1664582400000L);
-    private static final Date endDate = new Date(1664668800000L);
-    private static final int BAD_RESPONSE = 400;
-    private SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd");
+    private static final String DEFAULT_DATE_PATTERN = "MMddyyyy";
 
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response)  {
@@ -49,10 +44,11 @@ public class TrendService extends HttpServlet {
 
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response) {
-        String requestUrl = request.getRequestURI();
-        Date startDate = getDateFromRequestUrlWithIndex(requestUrl, startDateIndex);
-        Date endDate = getDateFromRequestUrlWithIndex(requestUrl, endDateIndex);
-        String[] ids = getIdsFromRequestUrlWithIndex(requestUrl, trendIdListIndex);
+        String requestURI = request.getRequestURI();
+        String[] requestURIArray = requestURI.split("/");
+        Date startDate = getDateFromStringArrayAtIndex(requestURIArray, startDateIndex);
+        Date endDate = getDateFromStringArrayAtIndex(requestURIArray, endDateIndex);
+        String[] ids = getIdsFromStringArrayAtIndex(requestURIArray, trendIdListIndex);
         List<MyAnalogTrendSample> results = getTrendResults(ids, startDate, endDate);
         writeResultsToResponse(results, response);
     }
@@ -72,10 +68,6 @@ public class TrendService extends HttpServlet {
     }
 
     private void writeResultsToResponse(List<MyAnalogTrendSample> results, HttpServletResponse response) {
-        response.setContentType("application/json");
-        response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1.
-        //response.setHeader("Pragma", "no-cache"); // HTTP 1.0.
-        //response.setDateHeader("Expires", 0); // Proxies.
         Writer writer = null;
         try {
             writer = response.getWriter();
@@ -84,10 +76,24 @@ public class TrendService extends HttpServlet {
             //throw new RuntimeException(e);
         }
 
+        response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // Disable Browser Cache for HTTP 1.1.
+        //response.setHeader("Pragma", "no-cache"); // Disable Browser Cache for HTTP 1.0.
+        //response.setDateHeader("Expires", 0); // Disable Browser Cache for Proxies.
+
+        if ((results == null) || (results.size() == 0)) {
+            response.setContentType("plain/text");
+            try {
+                writer.write("No results returned.");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            return;
+        }
+
+        response.setContentType("application/json");
         Gson gson = new GsonBuilder()
                 .setPrettyPrinting()
                 .create();
-
         if (writer != null) {
             try {
                 writer.write(gson.toJson(results));
@@ -98,9 +104,8 @@ public class TrendService extends HttpServlet {
         }
     }
 
-    private Date getDateFromRequestUrlWithIndex(String requestUrl, int index) {
-        String[] fields = requestUrl.split("/");
-        DateTools dateTools = new DateTools(TimeZone.getTimeZone(defaultTimeZone));
+    private Date getDateFromStringArrayAtIndex(String[] fields, int index) {
+        DateTools dateTools = new DateTools(DEFAULT_DATE_PATTERN, TimeZone.getTimeZone(defaultTimeZone));
         try {
             return dateTools.convertStringToDate(fields[index]);
         }
@@ -110,8 +115,7 @@ public class TrendService extends HttpServlet {
         }
     }
 
-    private String[] getIdsFromRequestUrlWithIndex(String requestUrl, int index) {
-        String[] fields = requestUrl.split("/");
+    private String[] getIdsFromStringArrayAtIndex(String[] fields, int index) {
         try {
             return fields[index].split(",");
         }
