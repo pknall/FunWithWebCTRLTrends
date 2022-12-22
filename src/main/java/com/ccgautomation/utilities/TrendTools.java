@@ -15,13 +15,13 @@ import java.util.Date;
 import java.util.List;
 
 public class TrendTools {
-
+    private final Logger logThis = new Logger(TrendTools.class.getName());
     private static final String ABSPATH  = "ABSPATH:1:#";
     public List<MyAnalogTrendSample> doWork(final List<String> ids,
                                             final MyAnalogTrendProcessor myAnalogTrendProcessor,
                                             Date startDate,
                                             Date endDate) throws SystemException, ActionExecutionException {
-        Logging.LOGGER.println("Entering TrendTools.doWork");
+        logThis.trace("Entering TrendTools.doWork");
         final TrendRange range = TrendRangeFactory.byDateRange(startDate, endDate);
         final List<MyAnalogTrendSample> results = new ArrayList<>();
         SystemConnection connection = DirectAccess.getDirectAccess().getRootSystemConnection();
@@ -41,12 +41,12 @@ public class TrendTools {
                         results.addAll(getTrendSources(analogData, myAnalogTrendProcessor));
                     }
                 } catch (Exception e) {
-                    Logging.LOGGER.println("Problem with Trend Retrieval: " + e.getMessage());
+                    logThis.error("Problem with Trend Retrieval: " + e.getMessage());
                     throw new RuntimeException(e);
                 }
             });
         });
-        Logging.LOGGER.println("Exiting TrendTools.doWork");
+        logThis.trace("Exiting TrendTools.doWork");
         return results;
     }
 
@@ -55,8 +55,8 @@ public class TrendTools {
         try {
             return analogData.process(myAnalogTrendProcessor).getSamples();
         } catch (TrendException e) {
-            // Log Error
-            throw new RuntimeException("Unable to process Trend Data: " + e);
+            logThis.error("Unable to process Trend Data: " + e.getMessage());
+            throw new RuntimeException(e);
         }
     }
 
@@ -64,8 +64,8 @@ public class TrendTools {
         try {
             return location.getAspect(TrendSource.class);
         } catch (NoSuchAspectException e) {
-            // Log Error
-            throw new RuntimeException("Unable to retrieve trend source at " + location + " + : " + e);
+            logThis.error("Unable to retrieve trend source at " + location + " + : " + e.getMessage());
+            throw new RuntimeException(e);
         }
     }
 
@@ -73,10 +73,8 @@ public class TrendTools {
         try {
             return tree.resolve(id.trim());
         } catch (UnresolvableException e) {
-            // Log Error
-            throw new RuntimeException("Unable to find tree location at " + id + " : " + e);
+            logThis.error("Unable to find tree location at " + id + " : " + e);
+            throw new RuntimeException(e);
         }
     }
-
-
 }
