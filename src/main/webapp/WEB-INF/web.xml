@@ -3,16 +3,6 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd"
          version="2.4">
-
-    <servlet>
-        <display-name>TrendServlet</display-name>
-        <servlet-name>trendservlet</servlet-name>
-        <servlet-class>com.ccgautomation.servlets.TrendServlet</servlet-class>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>trendservlet</servlet-name>
-        <url-pattern>/trendservlet</url-pattern>
-    </servlet-mapping>
    
     <servlet>
         <display-name>TrendService</display-name>

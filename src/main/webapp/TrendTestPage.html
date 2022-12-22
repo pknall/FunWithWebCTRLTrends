@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Trend Test Page</title>
+</head>
+<body>
+    <form name='trendForm' method='post' action=''>
+        Trend List: <input type='text' name='trendList' id='trendList' value='wp_ccg_fpvav-1-11/max_heating_cfm_trend' /><br />
+        Start Date: <input type='text' name='startDate' id='startDate' value='11012022' /><br />
+        End Date: <input type='text' name='endDate' id='endDate' value='12012022' /><br />
+        <button type='button' onclick='getTrends();'>Click Me!</button><br />
+    </form>
+    <hr />
+    <textarea type ='text' id='trendData' value='blank' rows='10' columns='10'></textarea>
+</body>
+</html>
+<script type="text/javascript">
+    function getTrends() {
+        let xhr = new XMLHttpRequest();
+        let startDate = document.getElementById("startDate").value;
+        let endDate = document.getElementById("endDate").value;
+        let trendId = document.getElementById("trendList").value;
+        trendId = trendId.replace("/", "!");
+        let webUrl = "trendservice/" + startDate + "/" + endDate + "/" + trendId;
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState == 4) {
+                let result = xhr.responseText;
+                document.getElementById("trendData").value = result;
+
+            }
+        }
+        xhr.open("POST",webUrl);
+        xhr.send(null);
+    }
+</script>
