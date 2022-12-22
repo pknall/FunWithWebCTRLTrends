@@ -15,10 +15,13 @@ import java.util.Date;
 import java.util.List;
 
 public class TrendTools {
+
+    private static final String ABSPATH  = "ABSPATH:1:#";
     public List<MyAnalogTrendSample> doWork(final List<String> ids,
                                             final MyAnalogTrendProcessor myAnalogTrendProcessor,
                                             Date startDate,
                                             Date endDate) throws SystemException, ActionExecutionException {
+        Logging.LOGGER.println("Entering TrendTools.doWork");
         final TrendRange range = TrendRangeFactory.byDateRange(startDate, endDate);
         final List<MyAnalogTrendSample> results = new ArrayList<>();
         SystemConnection connection = DirectAccess.getDirectAccess().getRootSystemConnection();
@@ -30,7 +33,7 @@ public class TrendTools {
             Tree geo = access.getTree(SystemTree.Geographic);
             ids.stream().forEach(id -> {
                 try {
-                    Location location = getTreeLocationByReferenceName(geo, id);
+                    Location location = getTreeLocationByReferenceName(geo, ABSPATH + id);
                     TrendSource trendSource = getTrendSourceAtLocation(location);
                     TrendSource.Type type = trendSource.getType();
                     if (type == TrendSource.Type.Analog) {
@@ -38,10 +41,12 @@ public class TrendTools {
                         results.addAll(getTrendSources(analogData, myAnalogTrendProcessor));
                     }
                 } catch (Exception e) {
+                    Logging.LOGGER.println("Problem with Trend Retrieval: " + e.getMessage());
                     throw new RuntimeException(e);
                 }
             });
         });
+        Logging.LOGGER.println("Exiting TrendTools.doWork");
         return results;
     }
 

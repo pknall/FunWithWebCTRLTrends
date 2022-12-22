@@ -3,6 +3,8 @@ package com.ccgautomation.servlets;
 import com.ccgautomation.trends.MyAnalogTrendProcessor;
 import com.ccgautomation.trends.MyAnalogTrendSample;
 import com.ccgautomation.utilities.DateTools;
+import com.ccgautomation.utilities.Logging;
+import com.ccgautomation.utilities.StringTools;
 import com.ccgautomation.utilities.TrendTools;
 import com.controlj.green.addonsupport.access.ActionExecutionException;
 import com.controlj.green.addonsupport.access.SystemException;
@@ -15,7 +17,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.Writer;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 // https://grafana.com/tutorials/build-a-data-source-plugin/
@@ -31,10 +32,10 @@ import java.util.*;
 
 public class TrendService extends HttpServlet {
 
-    private static final int startDateIndex = 1;
-    private static final int endDateIndex = 2;
-    private static final int trendIdListIndex = 3;
-    private static final String defaultTimeZone = "EST";
+    private static final int START_DATE_INDEX = 3;
+    private static final int END_DATE_INDEX = 4;
+    private static final int TREND_ID_INDEX = 5;
+    private static final String DEFAULT_TIME_ZONE = "EST";
     private static final String DEFAULT_DATE_PATTERN = "MMddyyyy";
 
     @Override
@@ -44,26 +45,32 @@ public class TrendService extends HttpServlet {
 
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response) {
+        Logging.LOGGER.println("Entering TrendService");
         String requestURI = request.getRequestURI();
+        Logging.LOGGER.println("RequestURI: " + requestURI);
         String[] requestURIArray = requestURI.split("/");
-        Date startDate = getDateFromStringArrayAtIndex(requestURIArray, startDateIndex);
-        Date endDate = getDateFromStringArrayAtIndex(requestURIArray, endDateIndex);
-        String[] ids = getIdsFromStringArrayAtIndex(requestURIArray, trendIdListIndex);
+        Date startDate = getDateFromStringArrayAtIndex(requestURIArray, START_DATE_INDEX);
+        Date endDate = getDateFromStringArrayAtIndex(requestURIArray, END_DATE_INDEX);
+        String[] ids = getIdsFromStringArrayAtIndex(requestURIArray, TREND_ID_INDEX);
+        Logging.LOGGER.println("Provided Values: " + startDate + " : " + endDate + " : " + new StringTools().toCSV(ids));
         List<MyAnalogTrendSample> results = getTrendResults(ids, startDate, endDate);
+        Logging.LOGGER.println("Results returned: " + results.size());
         writeResultsToResponse(results, response);
+        Logging.LOGGER.println("Leaving TrendService");
     }
 
     private List<MyAnalogTrendSample> getTrendResults(String[] ids, Date startDate, Date endDate) {
+        Logging.LOGGER.println("Entering TrendService.getTrendResults");
         List<MyAnalogTrendSample> results = null;
         try {
             results = new TrendTools().doWork(Arrays.asList(ids), new MyAnalogTrendProcessor(), startDate, endDate);
         } catch (SystemException e) {
-            //TODO Log Exception
-            // throw new RuntimeException(e);
+            Logging.LOGGER.println("TrendService.getTrendResults: " + e.getMessage());
+
         } catch (ActionExecutionException e) {
-            //TODO Log Exception
-            // throw new RuntimeException(e);
+            Logging.LOGGER.println("TrendService.getTrendResults: " + e.getMessage());
         }
+        Logging.LOGGER.println("Exiting TrendService.getTrendResults");
         return results;
     }
 
@@ -72,8 +79,7 @@ public class TrendService extends HttpServlet {
         try {
             writer = response.getWriter();
         } catch (IOException e) {
-            //TODO Log Exception
-            //throw new RuntimeException(e);
+            Logging.LOGGER.println("TrendService.writeResultsToResponse: Problem with getWriter(): " + e.getMessage());
         }
 
         response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // Disable Browser Cache for HTTP 1.1.
@@ -85,7 +91,7 @@ public class TrendService extends HttpServlet {
             try {
                 writer.write("No results returned.");
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                Logging.LOGGER.println("TrendService.writeResultsToResponse: Problem with writer.write(No results returned): " + e.getMessage());
             }
             return;
         }
@@ -98,29 +104,33 @@ public class TrendService extends HttpServlet {
             try {
                 writer.write(gson.toJson(results));
             } catch (IOException e) {
-                //TODO Log Exception
-                //throw new RuntimeException(e);
+                Logging.LOGGER.println("TrendService.writeResultsToResponse: Problem with writer.write(toJson()): " + e.getMessage());
             }
         }
     }
 
     private Date getDateFromStringArrayAtIndex(String[] fields, int index) {
-        DateTools dateTools = new DateTools(DEFAULT_DATE_PATTERN, TimeZone.getTimeZone(defaultTimeZone));
+        DateTools dateTools = new DateTools(DEFAULT_DATE_PATTERN, TimeZone.getTimeZone(DEFAULT_TIME_ZONE));
         try {
             return dateTools.convertStringToDate(fields[index]);
         }
-        catch(ParseException ex) {
-            //TODO Log Exception
+        catch(ParseException e) {
+            Logging.LOGGER.println("TrendService.getDateFromStringArrayAtIndex: " + e.getMessage());
             return null;
         }
     }
 
-    private String[] getIdsFromStringArrayAtIndex(String[] fields, int index) {
+    protected String[] getIdsFromStringArrayAtIndex(String[] fields, int index) {
+        String[] results = null;
         try {
-            return fields[index].split(",");
+            String value = fields[5];
+            value = value.replace("!", "/");
+            results = value.split(",");
         }
-        catch (Exception ex) {
+        catch (Exception e) {
+            Logging.LOGGER.println("TrendService.getIdsFromStringArrayAtIndex: " + e.getMessage());
             return null;
         }
+        return results;
     }
 }
