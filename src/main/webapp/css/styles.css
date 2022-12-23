@@ -1,0 +1,22 @@
+input:invalid {
+    border: 2px dashed red;
+}
+
+input:invalid:required {
+    background-image: linear-gradient(to right, pink, lightgreen);
+}
+
+input:valid {
+    border: 2px solid black;
+}
+
+
+input[type="text"],
+input[type="email"],
+input[type="number"],
+textarea,
+fieldset {
+    width: 100%;
+    border: 1px solid #333;
+    box-sizing: border-box;
+}

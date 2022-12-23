@@ -29,6 +29,9 @@ dependencies {
     // https://mvnrepository.com/artifact/org.json/json
     compile group: 'org.json', name: 'json', version: '20220924'
 
+    // https://mvnrepository.com/artifact/org.glassfish.jersey.core/jersey-client
+    compile 'org.glassfish.jersey.core:jersey-client:3.1.0'
+
     providedCompile 'com.controlj.green:directaccess-api-addon:1.4.0'
     providedCompile 'com.controlj.green:webaccess-api-addon:1.4.0'
     providedCompile 'com.controlj.green:addonsupport-api-addon:1.4.0'
