@@ -7,6 +7,8 @@ import java.io.Writer;
 
 public class Logger {
 
+    private static final String SEPARATOR = " - ";
+
     private String className;
     private static final PrintWriter LOGGER;
     private static LogLevel level = Configuration.defaultLogLevel;
@@ -31,11 +33,11 @@ public class Logger {
 
     private void logIt(String message, LogLevel messageLevel) {
         StringBuilder sb = new StringBuilder();
-        sb.append(",");
+        //sb.append(",");
         sb.append(messageLevel.name());
-        sb.append(",");
+        sb.append(SEPARATOR);
         sb.append(className);
-        sb.append(",");
+        sb.append(SEPARATOR);
         sb.append(message);
         LOGGER.println(sb);
     }
