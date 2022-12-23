@@ -17,7 +17,7 @@ import java.util.List;
 public class TrendTools {
     private final Logger logThis = new Logger(TrendTools.class.getName());
     private static final String ABSPATH  = "ABSPATH:1:#";
-    public List<MyAnalogTrendSample> doWork(final List<String> ids,
+    public List<MyAnalogTrendSample> doWork(final String trendId,
                                             final MyAnalogTrendProcessor myAnalogTrendProcessor,
                                             Date startDate,
                                             Date endDate) throws SystemException, ActionExecutionException {
@@ -31,20 +31,18 @@ public class TrendTools {
         //    public void execute(@NotNull SystemAccess access) {
         connection.runReadAction(FieldAccessFactory.newFieldAccess(), access -> {
             Tree geo = access.getTree(SystemTree.Geographic);
-            ids.stream().forEach(id -> {
-                try {
-                    Location location = getTreeLocationByReferenceName(geo, ABSPATH + id);
-                    TrendSource trendSource = getTrendSourceAtLocation(location);
-                    TrendSource.Type type = trendSource.getType();
-                    if (type == TrendSource.Type.Analog) {
-                        TrendData<TrendAnalogSample> analogData = (((AnalogTrendSource) trendSource).getTrendData(range));
-                        results.addAll(getTrendSources(analogData, myAnalogTrendProcessor));
-                    }
-                } catch (Exception e) {
-                    logThis.error("Problem with Trend Retrieval: " + e.getMessage());
-                    throw new RuntimeException(e);
+            try {
+                Location location = getTreeLocationByReferenceName(geo, ABSPATH + trendId);
+                TrendSource trendSource = getTrendSourceAtLocation(location);
+                TrendSource.Type type = trendSource.getType();
+                if (type == TrendSource.Type.Analog) {
+                    TrendData<TrendAnalogSample> analogData = (((AnalogTrendSource) trendSource).getTrendData(range));
+                    results.addAll(getTrendSources(analogData, myAnalogTrendProcessor));
                 }
-            });
+            } catch (Exception e) {
+                logThis.error("Problem with Trend Retrieval: " + e.getMessage());
+                throw new RuntimeException(e);
+            }
         });
         logThis.trace("Exiting TrendTools.doWork");
         return results;

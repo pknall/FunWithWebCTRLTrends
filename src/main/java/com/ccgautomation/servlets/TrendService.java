@@ -32,7 +32,8 @@ public class TrendService extends HttpServlet {
     private final Logger logThis = new Logger(TrendService.class.getName());
     private final int START_DATE_INDEX = 3;
     private final int END_DATE_INDEX = 4;
-    private final int TREND_ID_INDEX = 5;
+    private final int LOCATION_ID_INDEX = 5;
+    private final int TREND_ID_INDEX = 6;
     private final String DEFAULT_TIME_ZONE = "EST";
     private final String DEFAULT_DATE_PATTERN = "MMddyyyy";
 
@@ -49,19 +50,19 @@ public class TrendService extends HttpServlet {
         String[] requestURIArray = requestURI.split("/");
         Date startDate = getDateFromStringArrayAtIndex(requestURIArray, START_DATE_INDEX);
         Date endDate = getDateFromStringArrayAtIndex(requestURIArray, END_DATE_INDEX);
-        String[] ids = getIdsFromStringArrayAtIndex(requestURIArray, TREND_ID_INDEX);
-        logThis.trace("Provided Values: " + startDate + " : " + endDate + " : " + new StringTools().toCSV(ids));
-        List<MyAnalogTrendSample> results = getTrendResults(ids, startDate, endDate);
+        String trendId = getTrendIdFromStringArrayAtIndecies(requestURIArray, LOCATION_ID_INDEX, TREND_ID_INDEX);
+        logThis.trace("Provided Values: " + startDate + " : " + endDate + " : " + trendId);
+        List<MyAnalogTrendSample> results = getTrendResults(trendId, startDate, endDate);
         logThis.trace("Results returned: " + results.size());
         writeResultsToResponse(results, response);
         logThis.trace("Leaving TrendService");
     }
 
-    private List<MyAnalogTrendSample> getTrendResults(String[] ids, Date startDate, Date endDate) {
+    private List<MyAnalogTrendSample> getTrendResults(String trendId, Date startDate, Date endDate) {
         logThis.trace("Entering TrendService.getTrendResults");
         List<MyAnalogTrendSample> results = null;
         try {
-            results = new TrendTools().doWork(Arrays.asList(ids), new MyAnalogTrendProcessor(), startDate, endDate);
+            results = new TrendTools().doWork(trendId, new MyAnalogTrendProcessor(), startDate, endDate);
         } catch (SystemException e) {
             logThis.error("TrendService.getTrendResults: " + e.getMessage());
 
@@ -118,12 +119,10 @@ public class TrendService extends HttpServlet {
         }
     }
 
-    protected String[] getIdsFromStringArrayAtIndex(String[] fields, int index) {
-        String[] results = null;
+    protected String getTrendIdFromStringArrayAtIndecies(String[] fields, int locationIdIndex, int trendIdIndex) {
+        String results = null;
         try {
-            String value = fields[5];
-            value = value.replace("!", "/");
-            results = value.split(",");
+            results = fields[locationIdIndex] + "/" + fields[trendIdIndex];
         }
         catch (Exception e) {
             logThis.error("TrendService.getIdsFromStringArrayAtIndex: " + e.getMessage());

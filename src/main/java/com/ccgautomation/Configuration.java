@@ -4,5 +4,5 @@ import com.ccgautomation.utilities.LogLevel;
 
 public class Configuration {
 
-    public static LogLevel defaultLogLevel = LogLevel.INFO;
+    public static final  LogLevel defaultLogLevel = LogLevel.INFO;
 }
