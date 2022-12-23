@@ -1,27 +1,36 @@
+<%@ page import="com.ccgautomation.Configuration" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Trend Test Page</title>
+    <link rel="stylesheet" href="./css/styles.css">
 </head>
 <body>
     <form name='trendForm' method='post' action=''>
-        Trend List: <input type='text' name='trendList' id='trendList' value='wp_ccg_fpvav-1-11/max_heating_cfm_trend' /><br />
-        Start Date: <input type='text' name='startDate' id='startDate' value='11012022' /><br />
-        End Date: <input type='text' name='endDate' id='endDate' value='12012022' /><br />
-        <button type='button' onclick='getTrends();'>Click Me!</button><br />
+        <table>
+            <tr><td>Trend List:</td><td><input type='text' name='trendList' id='trendList' value='wp_ccg_fpvav-1-11/max_heating_cfm_trend' size="50" /></td></tr>
+            <tr><td>Start Date (MM/DD/YYYY):</td><td><input type="text" name="startDate" id="startDate" value="11/01/2022" required pattern="\d{2}/\d{2}/\d{4}"/></td></tr>
+            <tr><td>End Date (MM/DD/YYYY):</td><td><input type="text" name="endDate" id="endDate" value="12/01/2022" required pattern="\d{2}/\d{2}/\d{4}" /></td></tr>
+        </table>
+        <button type='button' onclick="getTrends();">Click Me!</button>
     </form>
     <hr />
-    <textarea type ='text' id='trendData' value='blank' rows='10' columns='10'></textarea>
+    <textarea type ='text' id='trendData' value='blank' rows='40' columns='10'></textarea>
 </body>
 </html>
 <script type="text/javascript">
+    // https://developer.mozilla.org/en-US/docs/Learn/Forms/Form_validation
     function getTrends() {
         let xhr = new XMLHttpRequest();
         let startDate = document.getElementById("startDate").value;
+        startDate = startDate.replaceAll("/","");
+
         let endDate = document.getElementById("endDate").value;
+        endDate = endDate.replaceAll("/","");
+
         let trendId = document.getElementById("trendList").value;
-        trendId = trendId.replace("/", "!");
+
         let webUrl = "trendservice/" + startDate + "/" + endDate + "/" + trendId;
         xhr.onreadystatechange = function() {
             if (xhr.readyState == 4) {
